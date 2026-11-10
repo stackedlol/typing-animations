@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".github/hello-dark.svg">
-  <img src=".github/hello.svg" alt="hello">
-</picture>
+<img src=".github/heyo.svg" alt="heyo">
 
 **text** is the codename for where I sample typing effects. This is the current one:
 **pastel.zig**, a text editor written in Zig and compiled to WebAssembly.

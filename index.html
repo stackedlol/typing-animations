@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>pastel.zig</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preload" href="pastel.wasm" as="fetch" crossorigin>
+<script>
+  /* theme before first paint */
+  try { const t = localStorage.getItem('pastel-zig:theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+  /* the favicon is a caret; most browsers freeze animated favicons, so blink it from here */
+  {
+    const icon = document.querySelector('link[rel="icon"]');
+    const bar = (o) => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges"><style>rect{fill:#1a1b22}@media(prefers-color-scheme:dark){rect{fill:#ecebe6}}</style><rect x="14" y="3" width="4" height="26" opacity="${o}"/></svg>`);
+    const on = bar(1), off = bar(0);
+    let lit = true;
+    setInterval(() => { icon.href = (lit = !lit) ? on : off; }, 530);
+  }
+</script>
+<style>
+  /* Manrope variable (200-800) by Mikhail Sharanda, SIL OFL 1.1 */
+  @font-face { font-family: "Manrope"; src: url("fonts/manrope.woff2") format("woff2"); font-weight: 200 800; font-display: block; }
+
+  :root {
+    --page: #ffffff; --ink: #1a1b22; --muted: rgba(26, 27, 34, 0.5); --line: rgba(26, 27, 34, 0.12);
+    --mint: #58be80; --sky: #5c98e2; --rose: #ec706c; --lav: #9676e2;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #000000; --ink: #ecebe6; --muted: rgba(236, 235, 230, 0.5); --line: rgba(236, 235, 230, 0.16);
+      --mint: #a8dcb5; --sky: #a6c8ea; --rose: #f0a3a3; --lav: #c6b3e8; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #000000; --ink: #ecebe6; --muted: rgba(236, 235, 230, 0.5); --line: rgba(236, 235, 230, 0.16);
+    --mint: #a8dcb5; --sky: #a6c8ea; --rose: #f0a3a3; --lav: #c6b3e8; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--page); overflow: hidden; }
+  body { font: 500 11px/1 "Manrope", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  /* the page is one canvas; Zig draws every pixel on it */
+  #board {
+    position: fixed; inset: 0; will-change: transform; width: 100vw; height: 100vh; display: block; outline: none;
+    cursor: text; touch-action: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 30px, #000 92px, #000 calc(100% - 48px), transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, transparent 30px, #000 92px, #000 calc(100% - 48px), transparent 100%);
+  }
+
+  .meta {
+    position: fixed; z-index: 2; letter-spacing: 0.12em; text-transform: uppercase;
+    user-select: none; -webkit-user-select: none; pointer-events: none;
+    transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hint { left: 24px; bottom: 20px; color: var(--muted); }
+  .hint b { font-weight: 600; color: var(--ink); }
+  body.typing .meta { opacity: 0.15; transition-duration: 900ms; transition-delay: 300ms; }
+
+  /* theme: the sun / moon slider from hover-webs, the only thing at the top */
+  #themeBtn {
+    position: fixed; z-index: 3; top: 19px; left: 50%; translate: -50% 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: space-between;
+    width: 54px; height: 26px; padding: 0 6px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--page); color: var(--muted); transition: opacity 260ms;
+  }
+  #themeBtn:hover { color: var(--ink); }
+  #themeBtn .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+  #themeBtn[aria-checked="true"] .knob { transform: translateX(28px); }
+  #themeBtn svg { position: relative; width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: color 300ms; }
+  #themeBtn .moon { fill: currentColor; stroke: none; }
+  #themeBtn[aria-checked="false"] .sun, #themeBtn[aria-checked="true"] .moon { color: var(--page); }
+  body.typing #themeBtn, body.typing #soundBtn { opacity: 0.15; }
+  #soundBtn {
+    position: fixed; z-index: 3; right: 24px; bottom: 14px; height: 26px; padding: 0 10px; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--page); color: var(--muted);
+    font: 500 10px/1 "Manrope", system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; transition: opacity 260ms;
+  }
+  #soundBtn:hover, #soundBtn[aria-pressed="true"] { color: var(--ink); }
+
+  .err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; line-height: 1.6; letter-spacing: 0.08em; }
+  @media (max-width: 560px) { .hint { display: none; } #soundBtn { right: 16px; } }
+</style>
+</head>
+<body>
+<canvas id="board" tabindex="0" aria-label="Text editor" role="textbox" aria-multiline="true"></canvas>
+
+<p class="hint meta">Written in Zig · <b>⌘Z</b> undo · saved locally</p>
+
+<button type="button" id="soundBtn" aria-pressed="true" title="Key sounds">Sound on</button>
+<button type="button" id="themeBtn" role="switch" aria-checked="false" aria-label="Dark mode" title="Theme">
+  <span class="knob" aria-hidden="true"></span>
+  <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+  <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"/></svg>
+</button>
+
+<script type="module">
+// The page is glue: it hands keys, clicks and the clipboard to Zig and shows the pixels Zig drew.
+const S = 2;                                   // the canvas renders at 2× css px
+const KEY = 'pastel-zig:doc', THEME = 'pastel-zig:theme';
+const WELCOME = `const std = @import("std");
+
+// pastel.zig: a text editor written in Zig.
+// Type to ripple the field, delete to dissolve, jump to lock on.
+pub fn main() void {
+    const greeting = "hello, page";
+    std.debug.print("{s} {d}\\n", .{ greeting, 42 });
+}
+`;
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+};
+
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+let z, img;
+try {
+  const bytes = await (await fetch('pastel.wasm')).arrayBuffer();
+  z = (await WebAssembly.instantiate(bytes, {})).instance.exports;
+} catch (err) {
+  document.body.insertAdjacentHTML('beforeend', `<p class="err">pastel.wasm didn't load.<br>Build it with zig/build.sh and serve this folder over http.</p>`);
+  throw err;
+}
+const dec = new TextDecoder();
+const view = () => new Uint8Array(z.memory.buffer);
+
+// the editor's text is ASCII; anything else becomes '?'
+function toScratch(str) {
+  const s = str.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
+  const n = Math.min(s.length, z.scratchCap());
+  const u = view(); const p = z.scratchPtr();
+  for (let i = 0; i < n; i++) { const c = s.charCodeAt(i); u[p + i] = c === 10 || (c >= 32 && c < 127) ? c : 63; }
+  return n;
+}
+const readText = () => dec.decode(view().subarray(z.textPtr(), z.textPtr() + z.textLen()));
+
+function resize() {
+  const w = Math.min(Math.round(innerWidth * S), z.maxW()), h = Math.min(Math.round(innerHeight * S), z.maxH());
+  canvas.width = w; canvas.height = h;
+  z.resize(w, h);
+  img = new ImageData(new Uint8ClampedArray(z.memory.buffer, z.fbPtr(), w * h * 4), w, h);
+  wake();
+}
+
+// the loop runs only while Zig says something is still moving
+let raf = 0, last = 0;
+function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+function tick(t) {
+  raf = 0;
+  const dt = last ? Math.min(t - last, 50) : 16.7;
+  const r = z.frame(dt);
+  if (r & 1) ctx.putImageData(img, 0, 0, z.outX(), z.outY(), z.outW(), z.outH());
+  const sx = z.shakeX() / S, sy = z.shakeY() / S;
+  canvas.style.transform = sx || sy ? `translate3d(${sx.toFixed(2)}px, ${sy.toFixed(2)}px, 0)` : '';
+  if (z.changed()) onChange();
+  if (r & 2) { last = t; wake(); } else last = 0;
+}
+
+// theme
+const root = document.documentElement, themeBtn = document.getElementById('themeBtn');
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : darkMQ.matches;
+function paintTheme() { const d = isDark(); themeBtn.setAttribute('aria-checked', String(d)); z.setTheme(d ? 1 : 0); wake(); }
+themeBtn.addEventListener('mousedown', (e) => e.preventDefault());
+themeBtn.addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; store.set(THEME, root.dataset.theme); paintTheme(); canvas.focus(); });
+darkMQ.addEventListener('change', paintTheme);
+
+// saving, quietly: nothing on the page, just the browser tab's title
+let saveT = 0;
+function meta() {
+  const first = (readText().slice(0, 400).split('\n').find((l) => l.trim()) || '').trim();
+  document.title = first ? `${first.slice(0, 40)} · pastel.zig` : 'pastel.zig';
+}
+function save() {
+  clearTimeout(saveT);
+  store.set(KEY, JSON.stringify({ text: readText(), pos: z.cursorPos() }));
+}
+function onChange() { meta(); clearTimeout(saveT); saveT = setTimeout(save, 450); }
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+// sound: a soft synthesized click per key. A muted body thump and a short tick of filtered noise.
+const soundBtn = document.getElementById('soundBtn');
+let soundOn = store.get('pastel-zig:sound') !== 'off', ac = null, master = null, noise = null;
+function paintSound() { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; }
+soundBtn.addEventListener('mousedown', (e) => e.preventDefault());
+soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('pastel-zig:sound', soundOn ? 'on' : 'off'); paintSound(); canvas.focus(); });
+paintSound();
+function click(kind, combo = 0) {
+  if (!soundOn) return;
+  try {
+    if (!ac) {
+      ac = new AudioContext();
+      master = ac.createGain(); master.gain.value = 0.22; master.connect(ac.destination);
+      noise = ac.createBuffer(1, Math.round(ac.sampleRate * 0.05), ac.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const t = ac.currentTime;
+    const [f0, len, body, tick, hz] = {
+      key:   [170 + Math.random() * 30 + Math.min(combo, 12) * 4, 0.07, 0.55, 0.35, 3600],
+      space: [120, 0.09, 0.6, 0.2, 2400],
+      enter: [92, 0.16, 0.9, 0.3, 1800],
+      del:   [260, 0.05, 0.3, 0.3, 5200],
+    }[kind];
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, t + len);
+    g.gain.setValueAtTime(body, t); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(master); o.start(t); o.stop(t + len + 0.02);
+    const n = ac.createBufferSource(), bp = ac.createBiquadFilter(), ng = ac.createGain();
+    n.buffer = noise; bp.type = 'bandpass'; bp.frequency.value = hz; bp.Q.value = 1.4;
+    ng.gain.setValueAtTime(tick, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    n.connect(bp).connect(ng).connect(master); n.start(t); n.stop(t + 0.05);
+  } catch (e) {}
+}
+let lastKeyAt = 0, combo = 0;
+
+// keyboard
+const KEYS = { ArrowLeft: 1, ArrowRight: 2, ArrowUp: 3, ArrowDown: 4, Home: 5, End: 6, Backspace: 7, Delete: 8, Enter: 9, Tab: 10, PageUp: 14, PageDown: 15 };
+addEventListener('keydown', (e) => {
+  const cmd = e.metaKey || e.ctrlKey;
+  const mods = (e.shiftKey ? 1 : 0) | (e.altKey ? 2 : 0) | (cmd ? 4 : 0);
+  if (cmd && !e.altKey) {
+    const k = e.key.toLowerCase();
+    if (k === 'z') { e.preventDefault(); z.key(e.shiftKey ? 13 : 12, mods); return wake(); }
+    if (k === 'y') { e.preventDefault(); z.key(13, mods); return wake(); }
+    if (k === 'a') { e.preventDefault(); z.key(11, mods); return wake(); }
+    if (k === 's') { e.preventDefault(); save(); return; }
+    if (!KEYS[e.key]) return;                    // let copy, cut and paste reach their events
+  }
+  const now = performance.now();
+  if (!e.repeat) { combo = now - lastKeyAt < 260 ? combo + 1 : 0; lastKeyAt = now; }
+  if (KEYS[e.key]) {
+    e.preventDefault(); z.keyDown(); z.key(KEYS[e.key], mods); document.body.classList.add('typing');
+    if (e.key === 'Enter') click('enter'); else if (e.key === 'Backspace' || e.key === 'Delete') click('del'); else if (e.key === 'Tab') click('space');
+    return wake();
+  }
+  if (e.key.length === 1 && !cmd) {
+    e.preventDefault();
+    const c = e.key.charCodeAt(0);
+    z.keyDown();
+    z.typeChar(c >= 32 && c < 127 ? c : 63);
+    click(c === 32 ? 'space' : 'key', combo);
+    document.body.classList.add('typing');
+    wake();
+  }
+});
+addEventListener('keyup', () => { z.keyUp(); wake(); });
+addEventListener('pointermove', (e) => { if (Math.abs(e.movementX) + Math.abs(e.movementY) > 3) document.body.classList.remove('typing'); }, { passive: true });
+
+// clipboard
+const sel = () => { const n = z.selText(); return n ? dec.decode(view().subarray(z.scratchPtr(), z.scratchPtr() + n)) : ''; };
+document.addEventListener('copy', (e) => { const s = sel(); if (!s) return; e.clipboardData.setData('text/plain', s); e.preventDefault(); });
+document.addEventListener('cut', (e) => { const s = sel(); if (!s) return; e.clipboardData.setData('text/plain', s); e.preventDefault(); z.cutSel(); wake(); });
+document.addEventListener('paste', (e) => { e.preventDefault(); const n = toScratch(e.clipboardData.getData('text/plain') || ''); if (n) { z.insertText(n); wake(); } });
+
+// pointer
+const pos = (e) => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height]; };
+canvas.addEventListener('pointerdown', (e) => { canvas.focus(); canvas.setPointerCapture(e.pointerId); const [x, y] = pos(e); z.pointer(e.detail === 2 ? 3 : 0, x, y, e.shiftKey ? 1 : 0); wake(); });
+canvas.addEventListener('pointermove', (e) => { if (e.buttons & 1) { const [x, y] = pos(e); z.pointer(1, x, y, 0); wake(); } });
+canvas.addEventListener('pointerup', (e) => { const [x, y] = pos(e); z.pointer(2, x, y, 0); });
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); z.wheel(e.deltaY * S * (e.deltaMode === 1 ? 16 : 1)); wake(); }, { passive: false });
+addEventListener('focus', () => { z.focus(1); wake(); });
+addEventListener('blur', () => { z.focus(0); z.keyUp(); wake(); });
+
+// start
+addEventListener('resize', resize);
+resize();
+paintTheme();
+let doc = null;
+try { doc = JSON.parse(store.get(KEY) || 'null'); } catch (e) {}
+const start = doc && typeof doc.text === 'string' ? doc.text : WELCOME;
+z.loadText(toScratch(start));
+z.setCursor(doc && Number.isFinite(doc.pos) ? doc.pos : start.length);
+meta();
+canvas.focus();
+wake();
+</script>
+</body>
+</html>

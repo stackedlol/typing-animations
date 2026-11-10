@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Text</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="preload" href="../fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  /* theme before first paint, so a dark session never flashes white */
+  try { const t = localStorage.getItem('phantom-text:theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* Manrope variable (200-800) by Mikhail Sharanda, SIL OFL 1.1, lifted from hover-webs */
+  @font-face {
+    font-family: "Manrope"; src: url("../fonts/manrope.woff2") format("woff2");
+    font-weight: 200 800; font-display: block;
+  }
+
+  /* Phantom: a white studio floor and black goo. In dark the studio flips: black floor, white goo */
+  :root {
+    --paper: oklch(0.972 0.002 255);
+    --ink: oklch(0.2 0.012 270);
+    --muted: oklch(0.56 0.01 265);
+    --line: oklch(0.88 0.004 260);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    /* cursors from Figma "Cursors (Community)", as in hover-webs */
+    --cur-arrow: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate(3.96 -0.12)'%3E%3Cg%3E%3Cg filter='url(%23filter0_d_102_11)'%3E%3Cpath d='M2.16 17.76V0.96L14.28 13.1485H7.18952L6.75977 13.2786L2.16 17.76Z' fill-rule='evenodd' clip-rule='evenodd' fill='white'/%3E%3Cpath d='M10.7449 16.5635C11.1744 17.6016 10.6882 18.792 9.65484 19.2326C8.61036 19.678 7.40291 19.1896 6.96183 18.1434L2.88 8.46155L6.72302 6.84L10.7449 16.5635Z' fill-rule='evenodd' clip-rule='evenodd' fill='white'/%3E%3C/g%3E%3Cpath d='M9.77305 16.6772C10.0078 17.2234 9.74953 17.8559 9.19969 18.0818C8.66208 18.3028 8.04661 18.0515 7.81731 17.5174L4.92 10.7703L6.88612 9.96L9.77305 16.6772Z' fill-rule='evenodd' clip-rule='evenodd' fill='black'/%3E%3Cpath d='M3.12 3.48V15.12L6.21809 12.1382L6.6647 11.9936H11.64L3.12 3.48Z' fill-rule='evenodd' clip-rule='evenodd' fill='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_102_11' x='-8.9407e-08' y='0' width='15.72' height='22.0374' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dx='-0.36' dy='0.84'/%3E%3CfeGaussianBlur stdDeviation='0.9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_102_11'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_102_11' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/g%3E%3C/svg%3E");
+  --cur-hand: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Cg filter='url(%23filter0_d_102_3)'%3E%3Cpath d='M6.99667 16.6967C6.66322 16.3018 6.25814 15.494 5.53722 14.5136C5.12861 13.9591 4.11533 12.9149 3.81358 12.3845C3.55174 11.9158 3.57992 11.7056 3.64214 11.3172C3.75252 10.6262 4.50866 10.0881 5.3153 10.1608C5.92469 10.2147 6.44131 10.5921 6.90626 10.9486C7.18688 11.1632 7.53209 11.5802 7.7399 11.8157C7.93129 12.0313 7.97826 12.1205 8.18256 12.3757C8.45261 12.7135 8.53715 12.8808 8.43383 12.5089C8.35046 11.9631 8.21426 11.0311 8.01701 10.207C7.86672 9.58199 7.83031 9.48406 7.68707 9.00431C7.5356 8.49376 7.45812 8.13614 7.31604 7.59479C7.21741 7.21187 7.04012 6.42954 6.99198 5.9894C6.92506 5.38752 6.88982 4.40603 7.30195 3.95489C7.62485 3.60168 8.36573 3.49495 8.82481 3.71282C9.42597 3.9978 9.76765 4.81645 9.92382 5.14325C10.2044 5.73083 10.3782 6.40973 10.5297 7.301C10.7222 8.43544 11.0768 10.01 11.0886 10.3412C11.16 10.824 11.0087 9.08023 11.0839 8.69071C11.152 8.3375 11.469 7.92708 11.8659 7.81595C12.2016 7.72242 12.595 7.68832 12.9414 7.75543C13.3088 7.82586 13.6963 8.07233 13.8408 8.3045C14.2658 8.99111 14.274 10.394 14.2916 10.3192C14.3926 9.90548 14.375 8.9669 14.6251 8.57628C14.7895 8.31881 15.2087 8.08663 15.4318 8.04923C15.7769 7.992 16.2008 7.9744 16.5636 8.04042C16.8559 8.09434 17.2517 8.42003 17.3585 8.57628C17.6144 8.9548 17.76 10.0254 17.8034 10.4006C17.8211 10.5558 17.8903 9.9693 18.1475 9.59079C18.6242 8.88768 20.3114 8.75123 20.376 10.2939C20.4054 11.0135 20.3995 10.9805 20.3995 11.4646C20.3995 12.0335 20.3855 12.3757 20.3526 12.7872C20.3161 13.2274 20.2152 14.222 20.0684 14.7041C20.0023 14.9208 19.8362 15.3146 19.6368 15.6862C19.4365 16.0595 19.1574 16.3814 18.8863 16.7071C18.5057 17.1643 17.9896 17.8381 17.9045 18.2218C17.7659 18.8401 17.8117 18.8446 17.7847 19.2836C17.7658 19.59 17.8429 19.9643 17.8909 20.1614C17.9084 20.2334 17.8602 20.3059 17.7865 20.3134C17.505 20.3417 16.8649 20.3946 16.4779 20.3366C16.0188 20.2673 15.4505 19.4112 15.3037 19.1494C15.1018 18.7884 14.6708 18.8578 14.503 19.124C14.2388 19.5455 13.6705 20.3014 13.269 20.3488C12.514 20.4377 10.9776 20.3869 9.72746 20.3723C9.65243 20.3714 9.59565 20.3027 9.60515 20.2283C9.64502 19.9157 9.69386 19.1741 9.31679 18.8765C8.95867 18.5915 8.34224 18.0138 7.97357 17.7101L6.99667 16.6967Z' fill-rule='evenodd' clip-rule='evenodd' fill='white'/%3E%3Cpath d='M6.99667 16.6967C6.66322 16.3018 6.25814 15.494 5.53722 14.5136C5.12861 13.9591 4.11533 12.9149 3.81358 12.3845C3.55174 11.9158 3.57992 11.7056 3.64214 11.3172C3.75252 10.6262 4.50866 10.0881 5.3153 10.1608C5.92469 10.2147 6.44131 10.5921 6.90626 10.9486C7.18688 11.1632 7.53209 11.5802 7.7399 11.8157C7.93129 12.0313 7.97826 12.1205 8.18256 12.3757C8.45261 12.7135 8.53715 12.8808 8.43383 12.5089C8.35046 11.9631 8.21426 11.0311 8.01701 10.207C7.86672 9.58199 7.83031 9.48406 7.68707 9.00431C7.5356 8.49376 7.45812 8.13614 7.31604 7.59479C7.21741 7.21187 7.04012 6.42954 6.99198 5.9894C6.92505 5.38752 6.88982 4.40603 7.30195 3.95489C7.62485 3.60168 8.36573 3.49495 8.82481 3.71282C9.42597 3.9978 9.76765 4.81645 9.92382 5.14325C10.2044 5.73083 10.3782 6.40973 10.5297 7.301C10.7222 8.43544 11.0768 10.01 11.0886 10.3412C11.16 10.824 11.0087 9.08023 11.0839 8.69071C11.152 8.3375 11.469 7.92708 11.8659 7.81595C12.2016 7.72242 12.595 7.68832 12.9414 7.75543C13.3088 7.82586 13.6963 8.07233 13.8408 8.3045C14.2658 8.99111 14.274 10.394 14.2916 10.3192C14.3926 9.90548 14.375 8.9669 14.6251 8.57628C14.7895 8.31881 15.2087 8.08663 15.4318 8.04923C15.7769 7.992 16.2008 7.9744 16.5636 8.04042C16.8559 8.09434 17.2517 8.42003 17.3585 8.57628C17.6144 8.9548 17.76 10.0254 17.8034 10.4006C17.8211 10.5558 17.8903 9.9693 18.1475 9.59078C18.6242 8.88768 20.3114 8.75123 20.376 10.2939C20.4054 11.0135 20.3995 10.9805 20.3995 11.4646C20.3995 12.0335 20.3855 12.3757 20.3526 12.7872C20.3161 13.2274 20.2152 14.222 20.0684 14.7041C20.0023 14.9208 19.8362 15.3146 19.6368 15.6862C19.4365 16.0595 19.1574 16.3814 18.8863 16.7071C18.5057 17.1643 17.9896 17.8381 17.9045 18.2218C17.7659 18.8401 17.8117 18.8446 17.7847 19.2836C17.7658 19.59 17.8429 19.9643 17.8909 20.1614C17.9084 20.2334 17.8602 20.3059 17.7865 20.3134C17.505 20.3417 16.8649 20.3946 16.4779 20.3366C16.0188 20.2673 15.4505 19.4112 15.3037 19.1494C15.1018 18.7884 14.6708 18.8578 14.503 19.124C14.2388 19.5455 13.6705 20.3014 13.269 20.3488C12.514 20.4377 10.9776 20.3869 9.72746 20.3723C9.65243 20.3714 9.59565 20.3027 9.60515 20.2283C9.64502 19.9157 9.69386 19.1741 9.31679 18.8765C8.95867 18.5915 8.34224 18.0138 7.97357 17.7101L6.99667 16.6967Z' stroke-width='0.96' stroke='black'/%3E%3C/g%3E%3Cpath d='M16.68 17.04V13.32' stroke-width='0.84' stroke-linecap='round' stroke='black'/%3E%3Cpath d='M14.52 17.04V13.32' stroke-width='0.84' stroke-linecap='round' stroke='black'/%3E%3Cpath d='M11.88 13.32V17.04' stroke-width='0.84' stroke-linecap='round' stroke='black'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_102_3' x='0.960123' y='2.16004' width='21.3599' height='21.3599' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dx='-0.36' dy='0.84'/%3E%3CfeGaussianBlur stdDeviation='0.9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_102_3'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_102_3' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: oklch(0.1 0 0); --ink: oklch(0.96 0 0); --muted: oklch(0.6 0 0);
+      --line: oklch(0.24 0 0); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: oklch(0.1 0 0); --ink: oklch(0.96 0 0); --muted: oklch(0.6 0 0);
+    --line: oklch(0.24 0 0); color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--paper); color: var(--muted);
+    font: 12px/1.45 var(--sans);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    cursor: var(--cur-arrow) 5 1, default;
+    overflow: hidden;
+    transition: background-color 300ms var(--ease-out), color 300ms var(--ease-out);
+  }
+  button { cursor: var(--cur-hand) 7 2, pointer; }
+
+  /* ─── the page is the document ─── */
+  .body {
+    position: fixed; inset: 0; overflow: hidden;
+    /* words dissolve under the chrome instead of being guillotined by it */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent 34px, #000 96px, #000 calc(100% - 64px), transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, transparent 34px, #000 96px, #000 calc(100% - 64px), transparent 100%);
+  }
+  #ed {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    margin: 0; border: 0; border-radius: 0; outline: 0; resize: none;
+    padding: 108px clamp(24px, 8vw, 148px) 45vh;
+    background: transparent; color: var(--ink);
+    font: 400 16px/1.85 var(--mono); letter-spacing: 0;
+    font-variant-ligatures: none;
+    white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 4;
+    caret-color: transparent;          /* the native caret is replaced by the goo */
+    overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: none;
+    cursor: text;
+    transition: color 300ms var(--ease-out);
+  }
+  #ed::-webkit-scrollbar { display: none; }
+  #ed::placeholder { color: var(--muted); opacity: 0.7; }
+  #ed::selection { background: var(--ink); color: var(--paper); }
+
+  #fx, #cur { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #fx { image-rendering: pixelated; image-rendering: crisp-edges; }   /* 1-bit cells stay hard-edged */
+  #cur { transition: opacity 140ms var(--ease-out); }
+  #cur.is-hidden { opacity: 0; transition-duration: 80ms; }
+
+  /* ─── chrome: 11px Manrope caps floating at the edges ─── */
+  .meta, .hint {
+    font: 500 11px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase;
+    user-select: none; -webkit-user-select: none;
+  }
+  .top {
+    position: fixed; z-index: 2; top: 0; left: 0; right: 0; height: 72px; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    pointer-events: none;
+  }
+  .top .left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .brand { margin: 0; color: var(--ink); font: 8px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0; }
+  #title { color: var(--ink); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+  .top .right { display: flex; gap: 14px; flex: none; font-variant-numeric: tabular-nums; }
+  #status { transition: opacity 400ms var(--ease-out), color 200ms var(--ease-out); }
+  #status.is-dirty { opacity: 0; transition-duration: 120ms; }
+  #status.is-flash { color: var(--ink); }
+
+  .hint { position: fixed; z-index: 2; left: 24px; bottom: 22px; margin: 0; color: var(--muted); pointer-events: none; }
+  .hint b { color: var(--ink); font-weight: 500; }
+
+  /* theme: the sun / moon slider from hover-webs */
+  #themeBtn {
+    position: fixed; z-index: 3; right: 24px; bottom: 16px;
+    display: inline-flex; align-items: center; justify-content: space-between;
+    width: 54px; height: 26px; padding: 0 6px; border: 1px solid var(--line); border-radius: 999px;
+    background: color-mix(in oklch, var(--ink) 5%, var(--paper)); color: var(--muted);
+  }
+  #themeBtn:hover { color: var(--ink); }
+  #themeBtn .knob {
+    position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--ink); transition: transform 300ms var(--ease-out);
+  }
+  #themeBtn[aria-checked="true"] .knob { transform: translateX(28px); }
+  #themeBtn svg {
+    position: relative; width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; transition: color 300ms var(--ease-out);
+  }
+  #themeBtn .moon { fill: currentColor; stroke: none; }
+  #themeBtn[aria-checked="false"] .sun, #themeBtn[aria-checked="true"] .moon { color: var(--paper); }
+  #themeBtn:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
+
+  /* focus: while you type, everything that isn't the words steps back */
+  .top > *, .hint, #themeBtn { transition: opacity 260ms var(--ease-out), color 300ms var(--ease-out); }
+  body.is-typing .hint, body.is-typing #themeBtn, body.is-typing .brand {
+    opacity: 0; transition-duration: 900ms; transition-delay: 300ms;
+  }
+  body.is-typing .top > * { opacity: 0.35; transition-duration: 900ms; transition-delay: 300ms; }
+
+  @media (max-width: 560px) {
+    .top { padding: 0 16px; }
+    .hint { display: none; }
+    #themeBtn { right: 16px; bottom: 18px; }
+    #ed { padding: 92px 20px 40vh; font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #themeBtn .knob, #themeBtn svg { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="body" id="body">
+  <textarea id="ed" aria-label="Text" placeholder="Start typing…" autocomplete="off" autocapitalize="sentences" spellcheck="false"></textarea>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <canvas id="cur" aria-hidden="true"></canvas>
+</div>
+
+<header class="top meta">
+  <div class="left">
+    <pre class="brand" role="img" aria-label="Phantom">⢕⣄⠀⠀⠀⠀⠀⠀⠀⠄
+⢽⣿⣷⣅⠀⠀⢔⣵⣿⠇
+⠙⣿⣿⣿⠅⢴⢿⣿⡿⠁</pre>
+    <span id="title">Untitled</span>
+  </div>
+  <div class="right"><span id="count">0 words</span><span id="status">Saved</span></div>
+</header>
+
+<p class="hint meta">Saved locally as you type <b>⌘S</b></p>
+
+<button type="button" id="themeBtn" role="switch" aria-checked="false" aria-label="Dark mode" title="Theme">
+  <span class="knob" aria-hidden="true"></span>
+  <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+  <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"/></svg>
+</button>
+
+<script>
+(() => {
+'use strict';
+
+const $ = (s) => document.querySelector(s);
+const root = document.documentElement;
+const ed = $('#ed'), box = $('#body');
+const curEl = $('#cur'), fxEl = $('#fx');
+const cctx = curEl.getContext('2d'), fx = fxEl.getContext('2d');
+const titleEl = $('#title'), countEl = $('#count'), statusEl = $('#status');
+const themeBtn = $('#themeBtn');
+
+const DOC = 'phantom-text:doc';
+const THEME = 'phantom-text:theme';
+const SCROLL = 12;        // auto-scroll follow rate (1/s)
+const SUB = 1 / 240;      // physics substep: small steps beat many iterations
+// hover-webs numbers, scaled down from a 60px button to a text caret
+const AWARE = 220;        // px: the caret starts leaning toward the pointer
+const REACH = 120;        // px: tendrils launch
+const LET_GO = 170;       // px: pointer this far away and every tendril lets go
+const MAX_LEN = 160;      // px: a tendril this long always snaps
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+};
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const follow = (rate, dt) => 1 - Math.exp(-rate * dt);
+
+// ───────────────────────────── restore ─────────────────────────────
+try {
+  const d = JSON.parse(store.get(DOC) || 'null');
+  if (d && typeof d.text === 'string') {
+    ed.value = d.text;
+    const p = Math.max(0, Math.min(d.pos ?? d.text.length, d.text.length));
+    ed.setSelectionRange(p, p);
+  }
+} catch (e) {}
+let prev = ed.value;
+
+// ───────────────────────────── measuring ─────────────────────────────
+// A hidden twin of the textarea, typeset identically, tells us where any character sits.
+const mirror = document.createElement('div');
+const marker = document.createElement('span');
+mirror.setAttribute('aria-hidden', 'true');
+box.appendChild(mirror);
+const COPY = ['boxSizing', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle',
+  'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'fontStretch', 'fontKerning',
+  'fontFeatureSettings', 'fontVariationSettings', 'fontVariantLigatures', 'letterSpacing',
+  'wordSpacing', 'lineHeight', 'textTransform', 'textIndent', 'tabSize', 'textRendering',
+  'whiteSpace', 'overflowWrap', 'wordBreak', 'hyphens'];
+let lineH = 30, ch = 9.6, BW = 3, BH = 23, dpr = 1, W = 0, H = 0, glyphFont = '16px monospace';
+
+function syncMirror() {
+  const cs = getComputedStyle(ed);
+  for (const p of COPY) mirror.style[p] = cs[p];
+  Object.assign(mirror.style, {
+    position: 'absolute', top: '0', left: '0', visibility: 'hidden', pointerEvents: 'none',
+    overflow: 'hidden', height: 'auto', width: ed.clientWidth + 'px', contain: 'layout style',
+  });
+  const fs = parseFloat(cs.fontSize);
+  lineH = parseFloat(cs.lineHeight) || fs * 1.85;
+  mirror.textContent = '';
+  marker.textContent = 'MMMMMMMMMM';
+  mirror.appendChild(marker);
+  ch = marker.getBoundingClientRect().width / 10 || fs * 0.6;
+  BW = Math.max(3, fs * 0.2); BH = Math.round(fs * 1.4);
+  glyphFont = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+}
+
+// line-top position of the boundary before `pos`
+function measure(pos, text = ed.value) {
+  let end = text.indexOf('\n', pos);
+  if (end < 0) end = text.length;
+  mirror.textContent = text.slice(0, pos);
+  // only the rest of this line matters: it decides whether the current word wraps
+  marker.textContent = text.slice(pos, end) || '​';
+  mirror.appendChild(marker);
+  const m = mirror.getBoundingClientRect();
+  const r = marker.getClientRects()[0] || marker.getBoundingClientRect();
+  return { x: r.left - m.left, y: r.top - m.top + (r.height - lineH) / 2 };
+}
+
+// centre of every visible glyph in text[a, b), in content coordinates
+function glyphs(text, a, b, cap) {
+  let end = text.indexOf('\n', b);
+  if (end < 0) end = text.length;
+  const stop = Math.min(b, a + cap);
+  mirror.textContent = text.slice(0, a);
+  const spans = [];
+  for (let i = a; i < stop; i++) {
+    const c = text[i];
+    if (c === '\n' || c === ' ' || c === '\t') { mirror.appendChild(document.createTextNode(c)); continue; }
+    const sp = document.createElement('span');
+    sp.textContent = c;
+    mirror.appendChild(sp);
+    spans.push(sp);
+  }
+  mirror.appendChild(document.createTextNode(text.slice(stop, end)));
+  const m = mirror.getBoundingClientRect();
+  return spans.map((sp) => {
+    const r = sp.getBoundingClientRect();
+    return { c: sp.textContent, x: r.left - m.left + r.width / 2, y: r.top - m.top + r.height / 2 };
+  });
+}
+
+function sizeCanvases() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = box.clientWidth; H = box.clientHeight;
+  curEl.width = Math.round(W * dpr); curEl.height = Math.round(H * dpr);
+  cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sizeDither();
+}
+
+let INK = '#1a1b22', GLOSS = 'rgba(255,255,255,0.55)', dark = false;
+function readColors() {
+  INK = getComputedStyle(ed).color;
+  readInk(); prevBox = null; fxLive = true;
+  curDrawn = false; wake();
+}
+
+// ───────────────────────────── dither ─────────────────────────────
+// Every effect is painted as smooth ink into a low-res buffer, then thresholded against an 8×8
+// Bayer matrix into 1-bit cells, like hover-webs' Dither mode. Nothing ever fades with alpha:
+// as ink thins the pattern opens up, dot by dot, until it is gone.
+const CELL = 2;                                   // css px per dither cell
+const BAYER = Uint8Array.from(
+  [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22,
+   3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21],
+  (v) => Math.round(((v + 0.5) / 64) * 255));
+const src = document.createElement('canvas');
+const sctx = src.getContext('2d', { willReadFrequently: true });
+let gw = 1, gh = 1, outImg = null, prevBox = null, inkRGB = [26, 27, 34];
+
+const splashes = [], crumbs = [], streaks = [];
+let combo = 0, lastKeyAt = 0, pendingEnter = false, clicked = false, ptr = null;
+
+function sizeDither() {
+  gw = Math.max(1, Math.ceil(W / CELL)); gh = Math.max(1, Math.ceil(H / CELL));
+  src.width = fxEl.width = gw; src.height = fxEl.height = gh;
+  outImg = fx.createImageData(gw, gh);
+  prevBox = null;
+}
+
+function readInk() {
+  const c = document.createElement('canvas'); c.width = c.height = 1;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.fillStyle = INK; x.fillRect(0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data;
+  inkRGB = [d[0], d[1], d[2]];
+}
+
+// ───────────────────────────── effects ─────────────────────────────
+const easeOut = (x) => 1 - (1 - x) ** 3;
+
+// a drop of ink lands: a flattened ring runs out along the page, droplets jump and fall back
+function splash(x, y, power = 1, drops = 6, delay = 0) {
+  if (reduced.matches) return;
+  if (splashes.length > 90) splashes.shift();
+  splashes.push({
+    x, y, t: -delay, power, life: 0.38 + 0.14 * power, R: 7 + 9 * power,
+    drops: Array.from({ length: drops }, () => {
+      const a = -Math.PI / 2 + rand(-1.2, 1.2), s = rand(70, 190) * Math.sqrt(power);
+      return { x, y, px: x, py: y, vx: Math.cos(a) * s * 1.2, vy: Math.sin(a) * s, r: rand(0.9, 1.9) * (0.8 + 0.25 * power), dead: false };
+    }),
+  });
+}
+
+// a deleted letter squashes into a puddle and dissolves, shedding a few drips
+function crumble(text, a, b) {
+  if (reduced.matches) return;
+  const st = ed.scrollTop, h = ed.clientHeight;
+  const list = glyphs(text, a, b, 160).filter((g) => g.y > st - lineH && g.y < st + h + lineH);
+  list.forEach((g, i) => {
+    const delay = Math.min(0.35, i * 0.012);
+    crumbs.push({ c: g.c, x: g.x, y: g.y, t: -delay, life: rand(0.42, 0.55), drift: rand(-6, 6) });
+    if (i < 3 || i % 5 === 0) splash(g.x, g.y + fs() * 0.64, 0.55, 3, delay + 0.05);
+  });
+}
+
+// the caret is flung somewhere: a dithered streak smears behind it
+function streak(x0, y0, x1, y1) {
+  if (reduced.matches) return;
+  streaks.push({ x0, y0, x1, y1, t: 0, life: 0.3 });
+}
+
+const fs = () => BH / 1.4;
+
+// typing: every letter lands with a splash. Typing fast builds a combo and the splashes grow
+function typed(text, a, b) {
+  const now = performance.now();
+  combo = now - lastKeyAt < 190 ? Math.min(combo + 1, 14) : Math.max(0, combo - 4);
+  lastKeyAt = now;
+  const power = 0.85 + combo * 0.06;
+  for (let i = a; i < b; i++) {
+    const g = glyphs(text, i, i + 1, 1)[0];
+    if (g) splash(g.x, g.y + fs() * 0.64, power, 5 + Math.round(combo / 3));
+    else {                                                     // spaces and tabs: a softer pat
+      const p = measure(i + 1, text);
+      splash(p.x - ch * 0.5, p.y + lineH / 2 + fs() * 0.64, 0.4, 2);
+    }
+  }
+  bulgeV = Math.min(bulgeV + 1.5 + combo * 0.15, 6);
+}
+
+function pasted(text, a, b) {
+  const list = glyphs(text, a, b, 240);
+  list.forEach((g, i) => { if (i % 3 === 0) splash(g.x, g.y + fs() * 0.64, 0.5, 1, Math.min(0.5, i * 0.006)); });
+  bulgeV = Math.min(bulgeV + 5, 7);
+}
+
+// ───────────────────────────── painting the dither ─────────────────────────────
+// each live effect gets its own small box, so cost follows the ink, not the distance between splashes
+function boxes(st) {
+  const out = [];
+  const add = (x0, y0, x1, y1) => {
+    const bx = clamp(Math.floor(x0 / CELL), 0, gw), by = clamp(Math.floor((y0 - st) / CELL), 0, gh);
+    const ex = clamp(Math.ceil(x1 / CELL), 0, gw), ey = clamp(Math.ceil((y1 - st) / CELL), 0, gh);
+    if (ex > bx && ey > by) out.push({ x: bx, y: by, w: ex - bx, h: ey - by });
+  };
+  for (const s of splashes) {
+    let x0 = s.x - s.R - 6, x1 = s.x + s.R + 6, y0 = s.y - s.R * 0.5 - 6, y1 = s.y + s.R * 0.5 + 6;
+    for (const d of s.drops) if (!d.dead) {
+      x0 = Math.min(x0, d.x - 4, d.px - 4); x1 = Math.max(x1, d.x + 4, d.px + 4);
+      y0 = Math.min(y0, d.y - 4, d.py - 4); y1 = Math.max(y1, d.y + 4, d.py + 4);
+    }
+    add(x0, y0, x1, y1);
+  }
+  for (const c of crumbs) add(c.x - ch * 1.6, c.y - lineH * 0.7, c.x + ch * 1.6, c.y + lineH * 0.8);
+  for (const k of streaks) add(Math.min(k.x0, k.x1) - BH, Math.min(k.y0, k.y1) - BH, Math.max(k.x0, k.x1) + BH, Math.max(k.y0, k.y1) + BH);
+  return out;
+}
+
+function drawDither(st) {
+  const cur = boxes(st);
+  const all = prevBox ? cur.concat(prevBox) : cur;
+  prevBox = cur;
+  if (!all.length) return;
+
+  // everything inked last frame lies in last frame's boxes: clear those and this frame's
+  sctx.setTransform(1, 0, 0, 1, 0, 0);
+  for (const r of all) sctx.clearRect(r.x, r.y, r.w, r.h);
+  if (cur.length) {
+    sctx.setTransform(1 / CELL, 0, 0, 1 / CELL, 0, -st / CELL);   // paint in document css px
+    sctx.fillStyle = '#000'; sctx.strokeStyle = '#000';
+    sctx.lineCap = 'round'; sctx.lineJoin = 'round';
+
+    for (const k of streaks) {
+      const p = clamp(k.t / k.life, 0, 1), e = easeOut(p);
+      // the tail retracts into the caret as the streak dies
+      const tx = k.x0 + (k.x1 - k.x0) * e, ty = k.y0 + (k.y1 - k.y0) * e;
+      const dx = k.x1 - tx, dy = k.y1 - ty, l = Math.hypot(dx, dy);
+      if (l < 0.5) continue;
+      const nx = -dy / l, ny = dx / l, w1 = BH * 0.32, w0 = 0.6;
+      sctx.globalAlpha = 0.9 * (1 - p) ** 1.4;
+      sctx.beginPath();
+      sctx.moveTo(tx + nx * w0, ty + ny * w0); sctx.lineTo(k.x1 + nx * w1, k.y1 + ny * w1);
+      sctx.lineTo(k.x1 - nx * w1, k.y1 - ny * w1); sctx.lineTo(tx - nx * w0, ty - ny * w0);
+      sctx.closePath(); sctx.fill();
+    }
+
+    for (const s of splashes) {
+      if (s.t < 0) continue;
+      const p = clamp(s.t / s.life, 0, 1), e = easeOut(p);
+      // the impact: a dense blot at the foot of the letter that soaks away fast
+      const blot = (1 - p) ** 2.4 * Math.min(1, s.power + 0.2);
+      if (blot > 0.02) {
+        sctx.globalAlpha = blot;
+        sctx.beginPath(); sctx.ellipse(s.x, s.y, 3 + 4 * e * s.power, 1.2 + 0.6 * e, 0, 0, Math.PI * 2); sctx.fill();
+      }
+      // the ring: an ellipse lying on the page, thinning as it runs out
+      const R = 2 + s.R * e;
+      sctx.globalAlpha = (1 - p) ** 1.1;
+      sctx.lineWidth = 1.2 + 3.2 * (1 - p) * Math.min(1.4, s.power);
+      sctx.beginPath(); sctx.ellipse(s.x, s.y, R, R * 0.28, 0, 0, Math.PI * 2); sctx.stroke();
+      // droplets, motion-blurred along their flight
+      for (const d of s.drops) {
+        if (d.dead) continue;
+        sctx.globalAlpha = 0.95;
+        sctx.lineWidth = d.r * 2;
+        sctx.beginPath(); sctx.moveTo(d.px, d.py); sctx.lineTo(d.x, d.y); sctx.stroke();
+      }
+    }
+
+    if (crumbs.length) {
+      sctx.font = glyphFont; sctx.textAlign = 'center'; sctx.textBaseline = 'middle';
+      for (const c of crumbs) {
+        if (c.t < 0) { sctx.globalAlpha = 1; sctx.fillText(c.c, c.x, c.y); continue; }
+        const p = clamp(c.t / c.life, 0, 1);
+        const foot = c.y + fs() * 0.64;
+        // the letter slumps onto its foot and spreads into a puddle while it dissolves
+        sctx.save();
+        sctx.translate(c.x + c.drift * p, foot);
+        sctx.scale(1 + 0.45 * p, Math.max(0.05, 1 - 0.85 * easeOut(p)));
+        sctx.globalAlpha = (1 - p) ** 0.9;
+        sctx.fillText(c.c, 0, c.y - foot);
+        sctx.restore();
+        sctx.globalAlpha = 0.85 * Math.sin(Math.PI * p);
+        sctx.beginPath(); sctx.ellipse(c.x + c.drift * p, foot, ch * (0.35 + 0.5 * p), 1.2 + p * 1.4, 0, 0, Math.PI * 2); sctx.fill();
+      }
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  // threshold against the Bayer matrix: on or off, never in between
+  const o = outImg.data, [r, g, b] = inkRGB;
+  for (const box of all) {
+    const img = sctx.getImageData(box.x, box.y, box.w, box.h).data;
+    for (let yy = 0; yy < box.h; yy++) {
+      const gy = box.y + yy, row = (gy & 7) * 8;
+      let si = yy * box.w * 4, oi = (gy * gw + box.x) * 4;
+      for (let xx = 0; xx < box.w; xx++, si += 4, oi += 4) {
+        if (img[si + 3] > BAYER[row + ((box.x + xx) & 7)]) { o[oi] = r; o[oi + 1] = g; o[oi + 2] = b; o[oi + 3] = 255; }
+        else o[oi + 3] = 0;
+      }
+    }
+    fx.putImageData(outImg, 0, 0, box.x, box.y, box.w, box.h);
+  }
+}
+
+// ───────────────────────────── the caret ─────────────────────────────
+// A solid slab of ink. It glides to the caret, squashes on every key and springs back,
+// and swells a little with each splash.
+const head = { x: 0, y: 0 };
+let tgx = 0, tgy = 0;
+let press = 0, pressV = 0, pressGoal = 0, bulge = 0, bulgeV = 0;
+let dirty = true, snapNext = true, fromInput = false, collapsed = true, hidden = false;
+let scrollTo = null, raf = 0, last = 0, curDrawn = false, fxLive = false;
+
+function shadow(ctx, on) {
+  if (on && !dark) {
+    ctx.shadowColor = 'rgba(14, 16, 26, 0.22)';
+    ctx.shadowBlur = 4 * dpr; ctx.shadowOffsetX = 0.6 * dpr; ctx.shadowOffsetY = 2 * dpr;
+  } else { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+}
+
+function drawCaret(st) {
+  cctx.clearRect(0, 0, W, H);
+  if (hidden) return;
+  const pw = BW * (1 + 1.0 * press + 0.7 * bulge), ph = BH * (1 - 0.24 * press + 0.1 * bulge);
+  const x = head.x - pw / 2, y = head.y - st + BH / 2 - ph;     // squash sits on its foot
+  const r = Math.min(pw / 2, 2);
+  shadow(cctx, true);
+  cctx.fillStyle = INK;
+  cctx.beginPath();
+  cctx.roundRect ? cctx.roundRect(x, y, pw, ph, r) : cctx.rect(x, y, pw, ph);
+  cctx.fill();
+  shadow(cctx, false);
+}
+
+// ───────────────────────────── the loop ─────────────────────────────
+function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+
+function update() {
+  dirty = false;
+  const s = ed.selectionStart, e = ed.selectionEnd;
+  const isCollapsed = s === e;
+  const p = measure(ed.selectionDirection === 'backward' ? s : e);
+  const nx = p.x, ny = p.y + lineH / 2;
+  const dx = nx - tgx, dy = ny - tgy, jump = Math.hypot(dx, dy);
+  const focused = document.activeElement === ed;
+
+  const snap = snapNext || (isCollapsed && !collapsed) || reduced.matches;
+  if (!snap && isCollapsed && focused) {
+    if (pendingEnter) {
+      streak(head.x, head.y, nx, ny);
+      splash(nx + ch * 0.4, ny + fs() * 0.64, 1.5, 9);
+      bulgeV = Math.min(bulgeV + 5, 7);
+    } else if (!fromInput && ((Math.abs(dy) > lineH * 0.9 && jump > ch * 2) || jump > ch * 12)) {
+      streak(head.x, head.y, nx, ny);
+      splash(nx, ny + fs() * 0.64, clicked ? 1.3 : 1.0, clicked ? 7 : 4);
+    }
+  }
+  pendingEnter = false; clicked = false;
+  if (snap) { head.x = nx; head.y = ny; }
+  tgx = nx; tgy = ny;
+  snapNext = false;
+
+  if (isCollapsed !== collapsed || !isCollapsed) { collapsed = isCollapsed; refreshCount(); }
+  hidden = !isCollapsed || !focused;
+  curEl.classList.toggle('is-hidden', hidden);
+
+  if (fromInput) {
+    // keep the line you're writing in the comfortable upper-middle of the page
+    const h = ed.clientHeight, y = ty() - ed.scrollTop;
+    if (y + lineH > h * 0.74) scrollTo = ty() - h * 0.52;
+    else if (y < 90) scrollTo = Math.max(0, ty() - h * 0.3);
+    fromInput = false;
+  }
+  curDrawn = false;
+}
+const ty = () => tgy - lineH / 2;
+
+function tick(t) {
+  raf = 0;
+  const dt = last ? Math.min((t - last) / 1000, 1 / 20) : 1 / 60;
+  if (dirty) update();
+
+  const steps = Math.max(1, Math.ceil(dt / SUB)), h = dt / steps;
+  for (let k = 0; k < steps; k++) {
+    head.x += (tgx - head.x) * follow(46, h); head.y += (tgy - head.y) * follow(46, h);
+    // press: ω 30, ζ 0.5. A little bounce on release is what makes a key feel like a key
+    pressV += (900 * (pressGoal - press) - 30 * pressV) * h; press += pressV * h;
+    bulgeV += (-700 * bulge - 2 * 0.35 * 26.5 * bulgeV) * h; bulge += bulgeV * h;
+    for (const s of splashes) {
+      s.t += h;
+      if (s.t < 0) continue;
+      for (const d of s.drops) {
+        if (d.dead) continue;
+        d.px = d.x; d.py = d.y;
+        d.vy += 1300 * h; d.vx *= Math.exp(-1.5 * h);
+        d.x += d.vx * h; d.y += d.vy * h;
+        if (d.vy > 0 && d.y >= s.y) {                         // it lands: a tiny secondary splash
+          d.dead = true;
+          if (d.r > 1.1 && splashes.length < 90) splashes.push({ x: d.x, y: s.y, t: 0, power: 0.3, life: 0.26, R: 4 + d.r * 2, drops: [] });
+        }
+      }
+    }
+    for (const c of crumbs) c.t += h;
+    for (const k of streaks) k.t += h;
+  }
+  for (let i = splashes.length - 1; i >= 0; i--) {
+    const s = splashes[i];
+    if (s.t > s.life && s.drops.every((d) => d.dead)) splashes.splice(i, 1);
+  }
+  for (let i = crumbs.length - 1; i >= 0; i--) if (crumbs[i].t > crumbs[i].life) crumbs.splice(i, 1);
+  for (let i = streaks.length - 1; i >= 0; i--) if (streaks[i].t > streaks[i].life) streaks.splice(i, 1);
+
+  const moving = Math.abs(tgx - head.x) > 0.02 || Math.abs(tgy - head.y) > 0.02;
+  if (!moving) { head.x = tgx; head.y = tgy; }
+  const springing = Math.abs(press - pressGoal) > 0.002 || Math.abs(pressV) > 0.02 ||
+    Math.abs(bulge) > 0.002 || Math.abs(bulgeV) > 0.02;
+  if (!springing) { press = pressGoal; pressV = 0; bulge = 0; bulgeV = 0; }
+
+  if (scrollTo !== null) {
+    const max = ed.scrollHeight - ed.clientHeight;
+    const goal = Math.max(0, Math.min(scrollTo, max));
+    const d = goal - ed.scrollTop;
+    if (Math.abs(d) < 0.75) { ed.scrollTop = goal; scrollTo = null; }
+    else {
+      let step = d * follow(SCROLL, dt);
+      if (Math.abs(step) < 1) step = Math.sign(d) * Math.min(1, Math.abs(d));
+      ed.scrollTop += step;
+    }
+  }
+
+  const st = ed.scrollTop;
+  const alive = splashes.length > 0 || crumbs.length > 0 || streaks.length > 0;
+  if (moving || springing || !curDrawn || st !== tick.st) { drawCaret(st); curDrawn = true; }
+  if (alive || fxLive || st !== tick.st) { drawDither(st); fxLive = alive; }
+  tick.st = st;
+
+  if (moving || springing || alive || scrollTo !== null || dirty) { last = t; wake(); }
+  else last = 0;
+}
+
+// ───────────────────────────── title, count, saving ─────────────────────────────
+const nf = new Intl.NumberFormat();
+const words = (s) => (s.match(/\S+/g) || []).length;
+
+function refreshTitle() {
+  const v = ed.value;
+  const first = (v.slice(0, 400).split('\n').find((l) => l.trim()) || '').trim();
+  titleEl.textContent = first || 'Untitled';
+  document.title = first ? `${first.length > 48 ? first.slice(0, 48) + '…' : first} · Text` : 'Text';
+}
+function refreshCount() {
+  const total = words(ed.value);
+  const label = total === 1 ? 'word' : 'words';
+  const s = ed.selectionStart, e = ed.selectionEnd;
+  countEl.textContent = s !== e
+    ? `${nf.format(words(ed.value.slice(s, e)))} of ${nf.format(total)} ${label}`
+    : `${nf.format(total)} ${label}`;
+}
+
+let saveT = 0, metaT = 0;
+function save() {
+  clearTimeout(saveT);
+  const ok = store.set(DOC, JSON.stringify({ text: ed.value, pos: ed.selectionEnd, at: Date.now() }));
+  statusEl.textContent = ok ? 'Saved' : 'Not saved';
+  statusEl.classList.remove('is-dirty');
+}
+function flash() {
+  statusEl.classList.add('is-flash');
+  setTimeout(() => statusEl.classList.remove('is-flash'), 700);
+}
+
+// ───────────────────────────── events ─────────────────────────────
+ed.addEventListener('input', () => {
+  const cur = ed.value;
+  // diff against the last value: what left dissolves, what arrived splashes
+  const n = Math.min(prev.length, cur.length);
+  let a = 0;
+  while (a < n && prev.charCodeAt(a) === cur.charCodeAt(a)) a++;
+  let s = 0;
+  while (s < n - a && prev.charCodeAt(prev.length - 1 - s) === cur.charCodeAt(cur.length - 1 - s)) s++;
+  const removed = prev.length - s > a, ins = cur.slice(a, cur.length - s);
+  if (!reduced.matches) {
+    if (removed) crumble(prev, a, prev.length - s);
+    if (ins.includes('\n') && ins.length <= 2) pendingEnter = true;
+    else if (ins.length && ins.length <= 3) typed(cur, a, cur.length - s);
+    else if (ins.length > 3) pasted(cur, a, cur.length - s);
+  }
+  prev = cur;
+
+  fromInput = true; dirty = true; wake();
+  document.body.classList.add('is-typing');
+  statusEl.classList.add('is-dirty');
+  clearTimeout(saveT); saveT = setTimeout(save, 450);
+  clearTimeout(metaT);
+  if (cur.length < 20000) { refreshTitle(); refreshCount(); }
+  else metaT = setTimeout(() => { refreshTitle(); refreshCount(); }, 120);
+});
+
+const onSelect = () => { if (document.activeElement === ed) { dirty = true; wake(); } };
+document.addEventListener('selectionchange', onSelect);
+ed.addEventListener('selectionchange', onSelect);   // Firefox fires it on the element
+ed.addEventListener('select', onSelect);
+ed.addEventListener('scroll', wake, { passive: true });
+ed.addEventListener('focus', () => { dirty = true; wake(); });
+ed.addEventListener('blur', () => { hidden = true; pressGoal = 0; curEl.classList.add('is-hidden'); wake(); });
+
+// your own scrolling always wins over the auto-scroll
+for (const ev of ['wheel', 'touchstart', 'mousedown']) {
+  ed.addEventListener(ev, () => { scrollTo = null; }, { passive: true });
+}
+ed.addEventListener('mousedown', () => { clicked = true; });
+
+// the caret is a key: it squashes on the way down and springs back on release
+const MODS = new Set(['Shift', 'Meta', 'Alt', 'Control', 'CapsLock', 'Fn']);
+ed.addEventListener('keydown', (e) => {
+  if (!MODS.has(e.key) && !e.metaKey && !e.ctrlKey) { pressGoal = 1; wake(); }
+  if (e.key === 'Tab' && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    e.preventDefault();
+    // execCommand keeps the edit on the native undo stack
+    if (!document.execCommand('insertText', false, '\t')) {
+      ed.setRangeText('\t', ed.selectionStart, ed.selectionEnd, 'end');
+      ed.dispatchEvent(new Event('input'));
+    }
+  }
+});
+ed.addEventListener('keyup', () => { pressGoal = 0; wake(); });
+
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 's') {
+    e.preventDefault(); save(); flash(); return;
+  }
+  // typing anywhere goes into the page
+  if (document.activeElement !== ed && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    ed.focus({ preventScroll: true });
+  }
+});
+
+addEventListener('pointermove', (e) => {
+  ptr = { x: e.clientX, y: e.clientY };
+  if (Math.abs(e.movementX) + Math.abs(e.movementY) > 3) document.body.classList.remove('is-typing');
+  wake();
+}, { passive: true });
+document.addEventListener('pointerleave', () => { ptr = null; wake(); });
+addEventListener('blur', () => { ptr = null; wake(); });
+
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+new ResizeObserver(() => {
+  syncMirror(); sizeCanvases();
+  splashes.length = 0; crumbs.length = 0; streaks.length = 0;
+  snapNext = true; dirty = true; curDrawn = false; wake();
+}).observe(box);
+
+// ───────────────────────────── theme ─────────────────────────────
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : darkMQ.matches;
+const paintTheme = () => {
+  dark = isDark();
+  themeBtn.setAttribute('aria-checked', String(dark));
+  readColors(); setTimeout(readColors, 340);     // again once the colour transition lands
+};
+themeBtn.addEventListener('mousedown', (e) => e.preventDefault());   // keep focus in the text
+themeBtn.addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark';
+  root.dataset.theme = next;
+  store.set(THEME, next);
+  paintTheme();
+});
+darkMQ.addEventListener('change', paintTheme);
+
+// ───────────────────────────── start ─────────────────────────────
+function start() {
+  syncMirror(); sizeCanvases(); paintTheme();
+  refreshTitle(); refreshCount();
+  snapNext = true; update();
+  ed.scrollTop = Math.max(0, ty() - ed.clientHeight * 0.4);
+  ed.focus({ preventScroll: true });
+  wake();
+}
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>pastel.zig</title>
+<title>text</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preload" href="pastel.wasm" as="fetch" crossorigin>
 <script>
@@ -50,18 +50,10 @@
             mask-image: linear-gradient(to bottom, transparent 0, transparent 30px, #000 92px, #000 calc(100% - 48px), transparent 100%);
   }
 
-  .meta {
-    position: fixed; z-index: 2; letter-spacing: 0.12em; text-transform: uppercase;
-    user-select: none; -webkit-user-select: none; pointer-events: none;
-    transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .hint { left: 24px; bottom: 20px; color: var(--muted); }
-  .hint b { font-weight: 600; color: var(--ink); }
-  body.typing .meta { opacity: 0.15; transition-duration: 900ms; transition-delay: 300ms; }
-
-  /* theme: the sun / moon slider from hover-webs, the only thing at the top */
+  /* top middle: the sun / moon slider from hover-webs, and the speaker beside it */
+  .top { position: fixed; z-index: 3; top: 19px; left: 50%; translate: -50% 0; display: flex; gap: 6px; }
   #themeBtn {
-    position: fixed; z-index: 3; top: 19px; left: 50%; translate: -50% 0; cursor: pointer;
+    position: relative; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: space-between;
     width: 54px; height: 26px; padding: 0 6px; border: 1px solid var(--line); border-radius: 999px;
     background: var(--page); color: var(--muted); transition: opacity 260ms;
@@ -74,27 +66,30 @@
   #themeBtn[aria-checked="false"] .sun, #themeBtn[aria-checked="true"] .moon { color: var(--page); }
   body.typing #themeBtn, body.typing #soundBtn { opacity: 0.15; }
   #soundBtn {
-    position: fixed; z-index: 3; right: 24px; bottom: 14px; height: 26px; padding: 0 10px; cursor: pointer;
-    border: 1px solid var(--line); border-radius: 999px; background: var(--page); color: var(--muted);
-    font: 500 10px/1 "Manrope", system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; transition: opacity 260ms;
+    display: grid; place-items: center; width: 26px; height: 26px; padding: 0; cursor: pointer;
+    border: 1px solid var(--line); border-radius: 50%; background: var(--page); color: var(--muted); transition: opacity 260ms;
   }
-  #soundBtn:hover, #soundBtn[aria-pressed="true"] { color: var(--ink); }
+  #soundBtn:hover { color: var(--ink); }
+  #soundBtn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #soundBtn .cone { fill: currentColor; stroke: none; }
+  #soundBtn[aria-pressed="true"] .mute, #soundBtn[aria-pressed="false"] .waves { display: none; }
 
   .err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; line-height: 1.6; letter-spacing: 0.08em; }
-  @media (max-width: 560px) { .hint { display: none; } #soundBtn { right: 16px; } }
 </style>
 </head>
 <body>
 <canvas id="board" tabindex="0" aria-label="Text editor" role="textbox" aria-multiline="true"></canvas>
 
-<p class="hint meta">Written in Zig · <b>⌘Z</b> undo · saved locally</p>
-
-<button type="button" id="soundBtn" aria-pressed="true" title="Key sounds">Sound on</button>
-<button type="button" id="themeBtn" role="switch" aria-checked="false" aria-label="Dark mode" title="Theme">
-  <span class="knob" aria-hidden="true"></span>
-  <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
-  <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"/></svg>
-</button>
+<div class="top">
+  <button type="button" id="themeBtn" role="switch" aria-checked="false" aria-label="Dark mode" title="Theme">
+    <span class="knob" aria-hidden="true"></span>
+    <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+    <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A7.8 7.8 0 0 1 9.4 4.5a7.8 7.8 0 1 0 10.1 10.1z"/></svg>
+  </button>
+  <button type="button" id="soundBtn" aria-pressed="true" aria-label="Key sounds" title="Key sounds">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path class="cone" d="M3 9.2h3.8L12 4.8v14.4l-5.2-4.4H3z"/><path class="waves" d="M15.6 9a4.2 4.2 0 0 1 0 6M18.6 6.2a8.2 8.2 0 0 1 0 11.6"/><path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+  </button>
+</div>
 
 <script type="module">
 // The page is glue: it hands keys, clicks and the clipboard to Zig and shows the pixels Zig drew.
@@ -168,24 +163,20 @@ themeBtn.addEventListener('mousedown', (e) => e.preventDefault());
 themeBtn.addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; store.set(THEME, root.dataset.theme); paintTheme(); canvas.focus(); });
 darkMQ.addEventListener('change', paintTheme);
 
-// saving, quietly: nothing on the page, just the browser tab's title
+// saving, quietly: nothing on the page
 let saveT = 0;
-function meta() {
-  const first = (readText().slice(0, 400).split('\n').find((l) => l.trim()) || '').trim();
-  document.title = first ? `${first.slice(0, 40)} · pastel.zig` : 'pastel.zig';
-}
 function save() {
   clearTimeout(saveT);
   store.set(KEY, JSON.stringify({ text: readText(), pos: z.cursorPos() }));
 }
-function onChange() { meta(); clearTimeout(saveT); saveT = setTimeout(save, 450); }
+function onChange() { clearTimeout(saveT); saveT = setTimeout(save, 450); }
 addEventListener('pagehide', save);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 
 // sound: a soft synthesized click per key. A muted body thump and a short tick of filtered noise.
 const soundBtn = document.getElementById('soundBtn');
 let soundOn = store.get('pastel-zig:sound') !== 'off', ac = null, master = null, noise = null;
-function paintSound() { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; }
+function paintSound() { soundBtn.setAttribute('aria-pressed', String(soundOn)); }
 soundBtn.addEventListener('mousedown', (e) => e.preventDefault());
 soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('pastel-zig:sound', soundOn ? 'on' : 'off'); paintSound(); canvas.focus(); });
 paintSound();
@@ -274,7 +265,6 @@ try { doc = JSON.parse(store.get(KEY) || 'null'); } catch (e) {}
 const start = doc && typeof doc.text === 'string' ? doc.text : WELCOME;
 z.loadText(toScratch(start));
 z.setCursor(doc && Number.isFinite(doc.pos) ? doc.pos : start.length);
-meta();
 canvas.focus();
 wake();
 </script>
